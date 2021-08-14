@@ -1,9 +1,17 @@
 import React from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { Provider as SupabaseProvider } from 'react-supabase';
 import logo from './logo.svg';
 import './App.css';
 
-function App() {
-  return (
+const {
+  REACT_APP_SUPABASE_URL = '',
+  REACT_APP_SUPABASE_PUBLIC_KEY = '',
+} = process.env;
+const client = createClient(REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_PUBLIC_KEY);
+
+const App = () => (
+  <SupabaseProvider value={client}>
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
@@ -24,7 +32,7 @@ function App() {
         </a>
       </header>
     </div>
-  );
-}
+  </SupabaseProvider>
+);
 
 export default App;
