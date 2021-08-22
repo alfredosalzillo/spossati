@@ -6,7 +6,7 @@ import {
   IconButton,
   InputAdornment,
   Toolbar,
-  AppBar as MuiAppBar, Collapse, Paper, List, IconButtonProps, TextFieldProps, Grow,
+  AppBar as MuiAppBar, Collapse, Paper, List, IconButtonProps, TextFieldProps,
 } from '@material-ui/core';
 import TextField from '@material-ui/core/TextField';
 import ArrowBack from '@material-ui/icons/ArrowBack';
@@ -160,9 +160,9 @@ const AppBar = <T, >(props: AppBarProps<T>) => {
           </Collapse>
         </Paper>
       </Collapse>
-      <Grow in={active} mountOnEnter unmountOnExit>
+      <Collapse in={active} mountOnEnter unmountOnExit>
         <Toolbar className={classes.root} />
-      </Grow>
+      </Collapse>
     </>
   );
 };

@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
 import {
-  Avatar, Container,
+  Avatar, Collapse, Container,
   Grid,
-  Grow, Hidden,
+  Hidden,
   IconButton,
   ListItem,
   ListItemAvatar,
   ListItemText,
 } from '@material-ui/core';
 import { makeStyles, Theme } from '@material-ui/core/styles';
-import { useHistory, useRouteMatch } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import {
   AutocompletePrediction,
@@ -21,7 +21,7 @@ import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useCurrentPosition } from '@api/geolocation';
 import HighlightedText from '@components/HighlightedText';
-import { useSearchQuery } from '@api/search-query';
+import { useSearchParams } from '@api/search-params';
 import AppBar, { AppBarPlaceholder } from '@components/AppBar';
 import PlaceDetailsCard from '@components/PlaceDetailsCard';
 
@@ -54,7 +54,7 @@ const Map: React.FC<MapProps> = ({
         if ('placeId' in e) {
           e.stop();
           // @ts-ignore
-          history.push(`/places/${e.placeId}`);
+          history.push(`/?place_id=${e.placeId}`);
         }
         return null;
       }}
@@ -151,12 +151,16 @@ const Layout: React.FC<LayoutProps> = ({
 export type PageProps = {};
 const Page: React.FunctionComponent<PageProps> = () => {
   const [position] = useCurrentPosition();
-  const searching = useRouteMatch('/search');
-  const place = useRouteMatch<{ id: string }>('/places/:id');
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const [{
+    q: query,
+    place_id: placeId,
+  }, setSearchParams] = useSearchParams();
+  const searching = Boolean((query || query === '') && !placeId);
+  const place = !!placeId;
   const history = useHistory();
-  const [query, setQuery] = useSearchQuery();
-  const [predictions, loadingPredictions] = usePlacesPrediction(searching ? query : '');
-  const [placeDetails, loadingPlaceDetails] = usePlaceDetails(place?.params.id);
+  const [predictions, loadingPredictions] = usePlacesPrediction(query);
+  const [placeDetails, loadingPlaceDetails] = usePlaceDetails(placeId);
   const center = useMemo(() => {
     if (placeDetails) return placeDetails.geometry?.location;
     if (!position) return null;
@@ -182,11 +186,15 @@ const Page: React.FunctionComponent<PageProps> = () => {
       appBar={(
         <AppBar
           searchQuery={query}
-          onSearchQueryChange={(e) => setQuery(e.target.value, 'replaceIn')}
+          onSearchQueryChange={(e) => {
+            setSearchParams({
+              q: e.target.value,
+            }, 'replaceIn');
+          }}
           onSearchFocus={() => {
-            if (history.location.pathname !== 'search') {
-              history.push('/search');
-            }
+            setSearchParams((state) => ({
+              q: state.q || '',
+            }), 'pushIn');
           }}
           loading={loading}
           active={isNotHomeRoute}
@@ -207,7 +215,7 @@ const Page: React.FunctionComponent<PageProps> = () => {
                 button
                 divider={index < predictions.length - 1}
                 onClick={() => {
-                  history.push(`/places/${option.place_id}?q=${mainText}`);
+                  history.push(`/?q=${mainText}&place_id=${option.place_id}`);
                 }}
               >
                 <ListItemAvatar>
@@ -240,15 +248,11 @@ const Page: React.FunctionComponent<PageProps> = () => {
       )}
       content={(
         !loading && place && (
-          <Grow in={!!placeDetails}>
-            {
-              placeDetails ? (
-                <PlaceDetailsCard
-                  details={placeDetails}
-                />
-              ) : <></>
-            }
-          </Grow>
+          <Collapse in={!!placeDetails} mountOnEnter unmountOnExit>
+            <PlaceDetailsCard
+              details={placeDetails!}
+            />
+          </Collapse>
         )
       )}
     />
