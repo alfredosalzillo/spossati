@@ -69,7 +69,10 @@ export const usePlaceDetails = (placeId?: string | null): [PlaceResult | null, b
         placeId,
       }, onComplete);
     });
-    return () => onComplete.cancel();
+    return () => {
+      setLoading(false);
+      onComplete.cancel();
+    };
   }, [placeId]);
   return [value, loading];
 };
@@ -130,7 +133,10 @@ export const usePlacesPrediction = (query = ''): [AutocompletePrediction[], bool
     getPredictions({
       input: query,
     }, onComplete);
-    return () => onComplete.cancel();
+    return () => {
+      setLoading(false);
+      onComplete.cancel();
+    };
   }, [query, getPredictions]);
   return [value, loading];
 };

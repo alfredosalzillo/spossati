@@ -8,10 +8,11 @@ import {
   ListItemText,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import {
   AutocompletePrediction,
-  initPlaceService,
+  initPlaceService, PlaceResult,
   usePlaceDetails,
   usePlacesPrediction,
 } from '@api/places';
@@ -67,19 +68,78 @@ const Map: React.FC<MapProps> = ({
   );
 };
 
-export type HomeProps = {};
-const Home: React.FunctionComponent<HomeProps> = () => {
+type PlacePredictionItemProps = {
+  option: AutocompletePrediction,
+  onClick?: (option: AutocompletePrediction) => void,
+  last?: boolean,
+};
+const PlacePredictionItem: React.FunctionComponent<PlacePredictionItemProps> = ({
+  option,
+  onClick,
+  last = false,
+}) => {
+  const {
+    main_text: mainText,
+    main_text_matched_substrings: mainMatches,
+    secondary_text: secondaryText,
+    secondary_text_matched_substrings: secondaryMatches,
+  } = option.structured_formatting;
+  return (
+    <ListItem
+      key={option.id}
+      button
+      divider={last}
+      onClick={() => onClick(option)}
+    >
+      <ListItemAvatar>
+        <Avatar>
+          <LocationOnIcon />
+        </Avatar>
+      </ListItemAvatar>
+      <ListItemText
+        primary={(
+          <HighlightedText
+            text={mainText}
+            matches={mainMatches.map(({ offset, length }) => [
+              offset,
+              offset + length,
+            ])}
+          />
+        )}
+        secondary={(
+          <HighlightedText
+            text={secondaryText}
+            matches={secondaryMatches?.map(({ offset, length }) => [
+              offset,
+              offset + length,
+            ])}
+          />
+        )}
+      />
+      <ArrowRightIcon />
+    </ListItem>
+  );
+};
+
+type HomeState = {
+  loading: boolean,
+  predictions?: AutocompletePrediction[],
+  placeDetails?: PlaceResult,
+  center?: google.maps.LatLng | google.maps.LatLngLiteral,
+};
+type StateParams = {
+  query?: string,
+  placeId?: string,
+};
+const useHomeState = (params: StateParams): HomeState => {
+  const {
+    query,
+    placeId,
+  } = params;
   const [position] = useCurrentPosition();
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const [{
-    q: query,
-    place_id: placeId,
-  }, setSearchParams] = useSearchParams();
-  const showSearchResult = Boolean((query || query === '') && !placeId);
-  const showPlaceDetails = !!placeId;
-  const history = useHistory();
   const [predictions, loadingPredictions] = usePlacesPrediction(query);
   const [placeDetails, loadingPlaceDetails] = usePlaceDetails(placeId);
+  const loading = loadingPlaceDetails || loadingPredictions;
   const center = useMemo(() => {
     if (placeDetails?.geometry?.location) return placeDetails.geometry.location;
     if (!position) return null;
@@ -87,8 +147,34 @@ const Home: React.FunctionComponent<HomeProps> = () => {
       lat: position.coords.latitude,
       lng: position.coords.longitude,
     });
-  }, [position, placeDetails, showPlaceDetails]);
-  const loading = loadingPlaceDetails || loadingPredictions;
+  }, [position, placeDetails]);
+  const [state] = useDebounce({
+    predictions,
+    placeDetails,
+    loading,
+    center,
+  }, 200);
+  return state;
+};
+
+export type HomeProps = {};
+const Home: React.FunctionComponent<HomeProps> = () => {
+  const [{
+    q: query,
+    place_id: placeId,
+  }, setSearchParams] = useSearchParams();
+  const history = useHistory();
+  const {
+    center,
+    predictions,
+    placeDetails,
+    loading,
+  } = useHomeState({
+    query,
+    placeId,
+  });
+  const showSearchResult = Boolean((query || query === '') && !placeId);
+  const showPlaceDetails = !!placeId;
   const withBackButton = !!showSearchResult || !!showPlaceDetails;
   const renderAvatar = () => {
     if (!showSearchResult && !showPlaceDetails) {
@@ -121,44 +207,20 @@ const Home: React.FunctionComponent<HomeProps> = () => {
           active={withBackButton}
           onBack={withBackButton ? (() => history.goBack()) : undefined}
           searchDisabled={!!showPlaceDetails}
-          showOptions={!!showSearchResult}
           avatar={renderAvatar()}
           options={predictions}
-          renderOption={(option: AutocompletePrediction, index) => {
-            const {
-              main_text: mainText,
-              secondary_text: secondaryText,
-              main_text_matched_substrings: matches,
-            } = option.structured_formatting;
-            return (
-              <ListItem
-                key={option.id}
-                button
-                divider={index < predictions.length - 1}
-                onClick={() => {
-                  history.push(`/?q=${mainText}&place_id=${option.place_id}`);
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar>
-                    <LocationOnIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={(
-                    <HighlightedText
-                      text={mainText}
-                      matches={matches.map(({ offset, length }) => [
-                        offset,
-                        offset + length])}
-                    />
-                  )}
-                  secondary={secondaryText}
-                />
-                <ArrowRightIcon />
-              </ListItem>
-            );
-          }}
+          showOptions={!!showSearchResult}
+          renderOption={(option: AutocompletePrediction, index) => (
+            <PlacePredictionItem
+              key={option.id}
+              option={option}
+              last={index < predictions.length - 1}
+              onClick={(current) => {
+                const q = current.structured_formatting.main_text;
+                history.push(`/?q=${q}&place_id=${current.place_id}`);
+              }}
+            />
+          )}
         />
       )}
       map={(

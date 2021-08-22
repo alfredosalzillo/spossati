@@ -3,11 +3,11 @@ import parse from 'autosuggest-highlight/parse';
 
 export type HighlightedTextProps = {
   text: string,
-  matches: Array<[number, number]>,
+  matches?: Array<[number, number]>,
 };
 const HighlightedText: React.FunctionComponent<HighlightedTextProps> = ({
   text,
-  matches,
+  matches = [],
 }) => {
   const parts = parse(text, matches);
   return (
