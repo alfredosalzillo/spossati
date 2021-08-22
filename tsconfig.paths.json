@@ -2,7 +2,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@components/*": ["src/components"]
+      "@components/*": ["src/components/*"],
+      "@api/*": ["src/api/*"],
+      "cancellable": ["src/utils/cancellable.ts"],
+      "lego": ["src/lego/index.tsx"]
     }
   }
 }
