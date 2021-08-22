@@ -4,11 +4,11 @@ import { Provider as SupabaseProvider } from 'react-supabase';
 import {
   LoadScript,
 } from '@react-google-maps/api';
-import { BrowserRouter, Route } from 'react-router-dom';
-import Page from '@components/Page';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { initAutocompleteService } from '@api/places';
 import { SignalProvider } from '@api/signal';
+import Home from './Routes/Home';
 
 const {
   REACT_APP_SUPABASE_URL = '',
@@ -29,7 +29,11 @@ const App = () => (
       >
         <BrowserRouter>
           <QueryParamProvider ReactRouterRoute={Route}>
-            <Page />
+            <Switch>
+              <Route path="/">
+                <Home />
+              </Route>
+            </Switch>
           </QueryParamProvider>
         </BrowserRouter>
       </LoadScript>
