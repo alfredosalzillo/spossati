@@ -27,8 +27,8 @@ import PlaceDetailsCard from '@components/PlaceDetailsCard';
 import Page from '@components/Page';
 import useAsync, { mergeAsyncStates } from '@api/use-async';
 import Authenticated from '@auth/Authenticated';
-import { useSignIn } from 'react-supabase';
 import { useSignInDialog } from '@components/SignInDialog';
+import useSession from '@auth/use-session';
 
 type MapProps = {
   center?: google.maps.LatLng | google.maps.LatLngLiteral | null,
@@ -126,19 +126,30 @@ const PlacePredictionItem: React.FunctionComponent<PlacePredictionItemProps> = (
   );
 };
 
-const AppBarUserAvatar = () => {
-  useSignIn();
+const UserAvatar = () => {
+  const { user } = useSession();
+  return (
+    <Avatar
+      alt={user.user_metadata.full_name}
+      src={user.user_metadata.avatar_url}
+    />
+  );
+};
+const HomeAppBarAction = () => {
   const signInDialog = useSignInDialog();
   return (
     <Authenticated
       fallback={(
-        <Button variant="text" onClick={() => signInDialog.open()}>
+        <Button
+          variant="text"
+          onClick={() => signInDialog.open()}
+        >
           Sign In
         </Button>
       )}
     >
       <IconButton edge="end">
-        <Avatar />
+        <UserAvatar />
       </IconButton>
     </Authenticated>
   );
@@ -220,7 +231,7 @@ const Home: React.FunctionComponent<HomeProps> = () => {
   const renderAvatar = () => {
     if (!showSearchResult && !showPlaceDetails) {
       return (
-        <AppBarUserAvatar />
+        <HomeAppBarAction />
       );
     }
     return null;

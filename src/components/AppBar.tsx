@@ -148,7 +148,7 @@ const AppBar = <T, >(props: AppBarProps<T>) => {
           </Container>
         </Toolbar>
       </MuiAppBar>
-      <Collapse in={showOptions}>
+      <Collapse in={showOptions} mountOnEnter unmountOnExit>
         <Paper className={classes.searchResultRoot} elevation={0}>
           <AppBarPlaceholder />
           <Collapse in={renderOption && !!options?.length}>

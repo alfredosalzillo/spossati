@@ -10,7 +10,7 @@ export const useSignInDialog = () => useDialog<never>(SignInDialogKey);
 const SignInDialog = () => {
   const [, signIn] = useSignIn();
   const {
-    opened,
+    opened = false,
     close,
   } = useSignInDialog();
   const handleClose = () => {
@@ -29,9 +29,13 @@ const SignInDialog = () => {
       <DialogContent dividers>
         <GoogleButton
           style={{ margin: 'auto' }}
-          onClick={() => signIn({
-            provider: 'google',
-          })}
+          onClick={() => {
+            signIn({
+              provider: 'google',
+            }, {
+              redirectTo: window.location.href,
+            });
+          }}
         />
       </DialogContent>
     </Dialog>
