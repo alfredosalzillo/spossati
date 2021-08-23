@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme: Theme) => ({
         background: theme.palette.background.paper,
         borderBottomLeftRadius: theme.spacing(4),
         borderBottomRightRadius: theme.spacing(4),
-        minHeight: '25vh',
+        minHeight: 50,
       },
     },
   },

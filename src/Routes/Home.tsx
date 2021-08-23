@@ -12,9 +12,10 @@ import { useDebounce } from 'use-debounce';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import {
   AutocompletePrediction,
-  initPlaceService, PlaceResult,
-  usePlaceDetails,
-  usePlacesPrediction,
+  fetchPlaceDetails,
+  fetchPlacesPrediction,
+  initPlaceService,
+  PlaceResult,
 } from '@api/places';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import { GoogleMap, Marker } from '@react-google-maps/api';
@@ -24,6 +25,7 @@ import { useSearchParams } from '@api/search-params';
 import AppBar from '@components/AppBar';
 import PlaceDetailsCard from '@components/PlaceDetailsCard';
 import Page from '@components/Page';
+import useAsync, { mergeAsyncStates } from '@api/use-async';
 
 type MapProps = {
   center?: google.maps.LatLng | google.maps.LatLngLiteral | null,
@@ -137,9 +139,23 @@ const useHomeState = (params: StateParams): HomeState => {
     placeId,
   } = params;
   const [position] = useCurrentPosition();
-  const [predictions, loadingPredictions] = usePlacesPrediction(query);
-  const [placeDetails, loadingPlaceDetails] = usePlaceDetails(placeId);
-  const loading = loadingPlaceDetails || loadingPredictions;
+  const placePredictionState = useAsync(() => {
+    if (!query) return null;
+    return fetchPlacesPrediction({
+      input: query,
+      types: ['establishment'],
+    });
+  }, [query]);
+  const placeDetailsState = useAsync(() => {
+    if (!placeId) return null;
+    return fetchPlaceDetails({
+      placeId,
+    });
+  }, [placeId]);
+  const {
+    values: [predictions, placeDetails],
+    loading,
+  } = mergeAsyncStates(placePredictionState, placeDetailsState);
   const center = useMemo(() => {
     if (placeDetails?.geometry?.location) return placeDetails.geometry.location;
     if (!position) return null;

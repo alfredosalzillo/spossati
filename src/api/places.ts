@@ -1,8 +1,3 @@
-import { useEffect, useMemo, useState } from 'react';
-import throttle from 'lodash/throttle';
-import { getLastKnowPosition } from '@api/geolocation';
-import cancellable from 'cancellable';
-
 const GlobalRefResolverSymbol = Symbol('GlobalRefResolver');
 type GlobalRef<T> = Promise<T> & {
   [GlobalRefResolverSymbol]: (value: T) => void;
@@ -20,7 +15,7 @@ const resolveGlobalRef = <T>(ref: GlobalRef<T>, value: T) => {
   ref[GlobalRefResolverSymbol]?.(value);
 };
 
-class LatLng {
+export class LatLng {
   static fromPosition(position: GeolocationPosition): google.maps.LatLng {
     return new google.maps.LatLng(
       position.coords.latitude,
@@ -35,6 +30,7 @@ export type PlacesServiceStatus = google.maps.places.PlacesServiceStatus;
 export type AutocompletePrediction = google.maps.places.AutocompletePrediction;
 export type AutocompleteService = google.maps.places.AutocompleteService;
 export type PlaceResult = google.maps.places.PlaceResult;
+type PlaceDetailsRequest = google.maps.places.PlaceDetailsRequest;
 
 const placeServiceRef = createGlobalRef<PlacesService>();
 const autoCompleteServiceRef = createGlobalRef<AutocompleteService>();
@@ -47,96 +43,30 @@ export const initPlaceService = (map: google.maps.Map) => {
   resolveGlobalRef(placeServiceRef, new google.maps.places.PlacesService(map));
 };
 
-const supportedTypes = [
-  'establishment',
-];
-
-export const usePlaceDetails = (placeId?: string | null): [PlaceResult | null, boolean] => {
-  const [value, setValue] = useState<PlaceResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    if (!placeId) {
-      setValue(null);
-      return undefined;
-    }
-    const onComplete = cancellable((place: PlaceResult) => {
-      if (place) setValue(place);
-      setLoading(false);
-    });
-    setLoading(true);
-    placeServiceRef.then((service) => {
-      service.getDetails({
-        placeId,
-      }, onComplete);
-    });
-    return () => {
-      setLoading(false);
-      onComplete.cancel();
-    };
-  }, [placeId]);
-  return [value, loading];
-};
-
-export const useTextSearchPlaces = (query?: string | null): [PlaceResult[] | null, boolean] => {
-  const [value, setValue] = useState<PlaceResult[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    if (!query) {
-      setValue(null);
-      return undefined;
-    }
-    const onComplete = cancellable((data: PlaceResult[]) => {
-      if (data) setValue(data);
-      setLoading(false);
-    });
-    setLoading(true);
-    placeServiceRef.then((service) => {
-      service.textSearch({
-        query,
-        location: LatLng.fromPosition(getLastKnowPosition()!),
-      }, onComplete);
-    });
-    return () => onComplete.cancel();
-  }, [query]);
-  return [value, loading];
-};
-
-export const usePlacesPrediction = (query = ''): [AutocompletePrediction[], boolean] => {
-  const [value, setValue] = useState<AutocompletePrediction[]>([]);
-  const [loading, setLoading] = useState(false);
-  const getPredictions = useMemo(() => throttle(async (
-    request: Omit<AutocompletionRequest, 'origin'>,
-    callback: (result: AutocompletePrediction[], status: PlacesServiceStatus) => void,
-  ) => {
-    const currentLocation = getLastKnowPosition();
-    const service = await autoCompleteServiceRef;
-    if (!currentLocation) return service.getPlacePredictions(request, callback);
-    return service.getPlacePredictions({
-      ...request,
-      types: supportedTypes,
-      origin: LatLng.fromPosition(currentLocation),
-    }, callback);
-  }, 200), []);
-  useEffect(() => {
-    if (!query) {
-      setValue([]);
-      setLoading(false);
-      return undefined;
-    }
-    setLoading(true);
-    const onComplete = cancellable((results?: AutocompletePrediction[]) => {
-      setLoading(false);
-      if (results) {
-        setValue(results);
+type PromisifyCallback <Result, Status> = (
+  onComplete: (result: Result, status: Status) => void,
+) => void;
+const promisify = <Result, Status extends string>(
+  callback: PromisifyCallback<Result, Status>,
+): Promise<Result> => new Promise<Result>((resolve, reject) => {
+    const onComplete = (result: Result, status: Status) => {
+      if (status === 'OK' || status === 'ZERO_RESULTS') {
+        resolve(result);
+      } else {
+        reject(status);
       }
-    });
-    getPredictions({
-      input: query,
-    }, onComplete);
-    return () => {
-      setLoading(false);
-      onComplete.cancel();
     };
-  }, [query, getPredictions]);
-  return [value, loading];
+    return callback(onComplete);
+  });
+
+export const fetchPlaceDetails = async (request: PlaceDetailsRequest): Promise<PlaceResult> => {
+  const service = await placeServiceRef;
+  return promisify((onComplete) => service.getDetails(request, onComplete));
+};
+
+export const fetchPlacesPrediction = async (
+  request: AutocompletionRequest,
+): Promise<AutocompletePrediction[]> => {
+  const service = await autoCompleteServiceRef;
+  return promisify((onComplete) => service.getPlacePredictions(request, onComplete));
 };
