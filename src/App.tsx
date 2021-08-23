@@ -8,13 +8,17 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { initAutocompleteService } from '@api/places';
 import { SignalProvider } from '@api/signal';
+import SignInDialog from '@components/SignInDialog';
 import Home from './Routes/Home';
 
 const {
   REACT_APP_SUPABASE_URL = '',
   REACT_APP_SUPABASE_PUBLIC_KEY = '',
 } = process.env;
-const client = createClient(REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_PUBLIC_KEY);
+const client = createClient(REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_PUBLIC_KEY, {
+  detectSessionInUrl: true,
+  persistSession: true,
+});
 
 const libraries = ['places'];
 
@@ -34,6 +38,7 @@ const App = () => (
                 <Home />
               </Route>
             </Switch>
+            <SignInDialog />
           </QueryParamProvider>
         </BrowserRouter>
       </LoadScript>

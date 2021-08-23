@@ -68,7 +68,7 @@ export type AppBarProps<T = any> = {
   onBack?: IconButtonProps['onClick'],
   loading?: boolean,
   searchDisabled?: boolean,
-  avatar?: React.ReactNode,
+  action?: React.ReactNode,
   options?: T[],
   renderOption?: (option: T, i: number) => React.ReactNode,
   showOptions?: boolean,
@@ -83,7 +83,7 @@ const AppBar = <T, >(props: AppBarProps<T>) => {
     onBack,
     loading = false,
     searchDisabled = false,
-    avatar = <></>,
+    action = <></>,
     options,
     renderOption,
     showOptions = false,
@@ -122,18 +122,18 @@ const AppBar = <T, >(props: AppBarProps<T>) => {
                 ),
                 endAdornment: (
                   <>
-                    <Fade in={loading} mountOnEnter unmountOnExit>
+                    <Collapse in={loading} mountOnEnter unmountOnExit>
                       <InputAdornment position="end">
                         <IconButton edge="end">
                           <CircularProgress size={32} />
                         </IconButton>
                       </InputAdornment>
-                    </Fade>
+                    </Collapse>
                     {
-                    avatar && (
+                    action && (
                       <Fade in={!loading} mountOnEnter unmountOnExit>
                         <InputAdornment position="end">
-                          {avatar}
+                          {action}
                         </InputAdornment>
                       </Fade>
                     )

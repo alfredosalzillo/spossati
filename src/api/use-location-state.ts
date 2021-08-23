@@ -12,15 +12,17 @@ const useLocationState = <S>(
   const currentValue: S = location.state?.[key];
   const [state, setState] = useState<S>(currentValue ?? initialState);
   useEffect(() => {
-    history.replace({
-      ...location,
-      state: {
-        ...(location.state || {}),
-        [key]: state && JSON.parse(JSON.stringify(state)),
-      },
-    });
+    if (JSON.stringify(state) !== JSON.stringify(currentValue)) {
+      history.replace({
+        ...location,
+        state: {
+          ...(location.state || {}),
+          [key]: state,
+        },
+      });
+    }
   }, [state]);
-  return [state, setState];
+  return [currentValue, setState];
 };
 
 export default useLocationState;

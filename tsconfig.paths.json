@@ -4,8 +4,8 @@
     "paths": {
       "@components/*": ["src/components/*"],
       "@api/*": ["src/api/*"],
-      "cancellable": ["src/utils/cancellable.ts"],
-      "lego": ["src/lego/index.tsx"]
+      "@auth/*": ["src/auth/*"],
+      "cancellable": ["src/utils/cancellable.ts"]
     }
   }
 }

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  Avatar,
+  Avatar, Button,
   Collapse,
   IconButton,
   ListItem,
@@ -26,6 +26,9 @@ import AppBar from '@components/AppBar';
 import PlaceDetailsCard from '@components/PlaceDetailsCard';
 import Page from '@components/Page';
 import useAsync, { mergeAsyncStates } from '@api/use-async';
+import Authenticated from '@auth/Authenticated';
+import { useSignIn } from 'react-supabase';
+import { useSignInDialog } from '@components/SignInDialog';
 
 type MapProps = {
   center?: google.maps.LatLng | google.maps.LatLngLiteral | null,
@@ -123,6 +126,24 @@ const PlacePredictionItem: React.FunctionComponent<PlacePredictionItemProps> = (
   );
 };
 
+const AppBarUserAvatar = () => {
+  useSignIn();
+  const signInDialog = useSignInDialog();
+  return (
+    <Authenticated
+      fallback={(
+        <Button variant="text" onClick={() => signInDialog.open()}>
+          Sign In
+        </Button>
+      )}
+    >
+      <IconButton edge="end">
+        <Avatar />
+      </IconButton>
+    </Authenticated>
+  );
+};
+
 type HomeState = {
   loading: boolean,
   predictions?: AutocompletePrediction[],
@@ -169,7 +190,11 @@ const useHomeState = (params: StateParams): HomeState => {
     placeDetails,
     loading,
     center,
-  }, 200);
+  }, 200, {
+    equalityFn: (left: any, right: any) => Object
+      .keys(left)
+      .every((key) => left[key] === right[key]),
+  });
   return state;
 };
 
@@ -195,9 +220,7 @@ const Home: React.FunctionComponent<HomeProps> = () => {
   const renderAvatar = () => {
     if (!showSearchResult && !showPlaceDetails) {
       return (
-        <IconButton edge="end">
-          <Avatar />
-        </IconButton>
+        <AppBarUserAvatar />
       );
     }
     return null;
@@ -223,7 +246,7 @@ const Home: React.FunctionComponent<HomeProps> = () => {
           active={withBackButton}
           onBack={withBackButton ? (() => history.goBack()) : undefined}
           searchDisabled={!!showPlaceDetails}
-          avatar={renderAvatar()}
+          action={renderAvatar()}
           options={predictions}
           showOptions={!!showSearchResult}
           renderOption={(option: AutocompletePrediction, index) => (
