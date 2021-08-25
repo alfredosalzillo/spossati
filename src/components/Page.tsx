@@ -39,7 +39,7 @@ const Page: React.FC<PageProps> = ({
 }) => {
   const classes = useStyles();
   return (
-    <form
+    <div
       className={classes.root}
       onSubmit={(e) => e.preventDefault()}
     >
@@ -80,7 +80,7 @@ const Page: React.FC<PageProps> = ({
           }
         </Hidden>
       </Grid>
-    </form>
+    </div>
   );
 };
 
