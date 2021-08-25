@@ -5,6 +5,7 @@
       "@components/*": ["src/components/*"],
       "@api/*": ["src/api/*"],
       "@auth/*": ["src/auth/*"],
+      "@icons/*": ["src/icons/*"],
       "cancellable": ["src/utils/cancellable.ts"]
     }
   }

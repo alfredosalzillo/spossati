@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Provider as SupabaseProvider } from 'react-supabase';
 import {
@@ -9,6 +9,7 @@ import { QueryParamProvider } from 'use-query-params';
 import { initAutocompleteService } from '@api/places';
 import { SignalProvider } from '@api/signal';
 import SignInDialog from '@components/SignInDialog';
+import SplashScreen from '@components/SplashScreen';
 import Home from './Routes/Home';
 
 const {
@@ -23,27 +24,29 @@ const client = createClient(REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_PUBLIC_KE
 const libraries = ['places'];
 
 const App = () => (
-  <SignalProvider>
-    <SupabaseProvider value={client}>
-      <LoadScript
-        googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_PUBLIC_KEY || ''}
-        libraries={libraries as any}
-        onLoad={initAutocompleteService}
-        loadingElement={<></>}
-      >
-        <BrowserRouter>
-          <QueryParamProvider ReactRouterRoute={Route}>
-            <Switch>
-              <Route path="/">
-                <Home />
-              </Route>
-            </Switch>
-            <SignInDialog />
-          </QueryParamProvider>
-        </BrowserRouter>
-      </LoadScript>
-    </SupabaseProvider>
-  </SignalProvider>
+  <Suspense fallback={<SplashScreen />}>
+    <SignalProvider>
+      <SupabaseProvider value={client}>
+        <LoadScript
+          googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_PUBLIC_KEY || ''}
+          libraries={libraries as any}
+          onLoad={initAutocompleteService}
+          loadingElement={<SplashScreen />}
+        >
+          <BrowserRouter>
+            <QueryParamProvider ReactRouterRoute={Route}>
+              <Switch>
+                <Route path="/">
+                  <Home />
+                </Route>
+              </Switch>
+              <SignInDialog />
+            </QueryParamProvider>
+          </BrowserRouter>
+        </LoadScript>
+      </SupabaseProvider>
+    </SignalProvider>
+  </Suspense>
 );
 
 export default App;
