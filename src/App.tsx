@@ -10,7 +10,9 @@ import { initAutocompleteService } from '@api/places';
 import { SignalProvider } from '@api/signal';
 import SignInDialog from '@components/SignInDialog';
 import SplashScreen from '@components/SplashScreen';
+import AppMenuDialog from '@components/AppMenuDialog';
 import Home from './Routes/Home';
+import Logout from './Routes/Logout';
 
 const {
   REACT_APP_SUPABASE_URL = '',
@@ -36,11 +38,15 @@ const App = () => (
           <BrowserRouter>
             <QueryParamProvider ReactRouterRoute={Route}>
               <Switch>
+                <Route path="/logout">
+                  <Logout />
+                </Route>
                 <Route path="/">
                   <Home />
                 </Route>
               </Switch>
               <SignInDialog />
+              <AppMenuDialog />
             </QueryParamProvider>
           </BrowserRouter>
         </LoadScript>

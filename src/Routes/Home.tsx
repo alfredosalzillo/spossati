@@ -29,6 +29,7 @@ import useAsync, { mergeAsyncStates } from '@api/use-async';
 import Authenticated from '@auth/Authenticated';
 import { useSignInDialog } from '@components/SignInDialog';
 import useSession from '@auth/use-session';
+import { useAppMenuDialog } from '@components/AppMenuDialog';
 
 type MapProps = {
   center?: google.maps.LatLng | google.maps.LatLngLiteral | null,
@@ -137,6 +138,7 @@ const UserAvatar = () => {
 };
 const HomeAppBarAction = () => {
   const signInDialog = useSignInDialog();
+  const appMenuDialog = useAppMenuDialog();
   return (
     <Authenticated
       fallback={(
@@ -148,7 +150,10 @@ const HomeAppBarAction = () => {
         </Button>
       )}
     >
-      <IconButton edge="end">
+      <IconButton
+        edge="end"
+        onClick={() => appMenuDialog.open()}
+      >
         <UserAvatar />
       </IconButton>
     </Authenticated>

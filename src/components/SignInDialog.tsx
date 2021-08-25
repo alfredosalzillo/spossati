@@ -21,14 +21,15 @@ const SignInDialog = () => {
       onClose={handleClose}
       aria-labelledby="sing-in-dialog-title"
       open={opened}
-      maxWidth="md"
+      maxWidth="xs"
+      fullWidth
     >
       <DialogTitle id="sign-in-dialog-title" onClose={handleClose}>
         Sign In
       </DialogTitle>
       <DialogContent dividers>
         <GoogleButton
-          style={{ margin: 'auto' }}
+          style={{ margin: 'auto', width: 'auto' }}
           onClick={() => {
             signIn({
               provider: 'google',
