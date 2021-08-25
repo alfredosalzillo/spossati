@@ -1,55 +1,42 @@
 create extension if not exists moddatetime schema extensions;
 
-create table users
+create type YDN as enum ('Y', 'D', 'N');
+create type REVIEW_STATUS as enum('pending', 'valid', 'rejected');
+
+drop table public.reviews;
+create table public.reviews
 (
-    id         uuid      default auth.uid() not null primary key,
-    username   varchar(125)                 null unique,
-    avatar_url varchar(255)                 null,
-    created_at timestamp default now(),
-    updated_at timestamp default now()
+    id                           uuid      default gen_random_uuid() not null primary key,
+    user_id                      uuid      default auth.uid()        not null,
+    place_id                     varchar(255)                        not null,
+    card_payment_accepted        YDN                                 null,
+    contactless_payment_accepted YDN                                 null,
+    reason                       text                                null,
+    created_at                   timestamp default now()
 );
 
-create trigger handle_updated_at
-    before update
-    on users
-    for each row
-execute procedure extensions.moddatetime(updated_at);
-
-create policy "all can read all users" on public.users for all using (true) with check (true);
+create policy "all can read all review" on public.reviews for all using (true) with check (true);
 
 create
-    policy "individuals can create their own users" on public.users for
-    insert with check (auth.uid() = id);
+    policy "individuals can create their own reviews" on public.reviews for
+    insert with check (auth.uid() = user_id);
 
 create
-    policy "individuals can update their own users" on public.users for
-    update using (auth.uid() = id)
-    with check (auth.uid() = id);
+    policy "individuals can update their own reviews" on public.reviews for
+    update using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
 
 create
-    policy "individuals can delete their own users" on public.users for
-    delete using (auth.uid() = id);
+    policy "individuals can delete their own reviews" on public.reviews for
+    delete using (auth.uid() = user_id);
 
-CREATE OR REPLACE FUNCTION auth.create_new_public_user()
-    RETURNS TRIGGER AS
-$$
-BEGIN
-    INSERT INTO public.users(id)
-    VALUES (new.id);
-    RETURN NEW;
-END;
-$$
-    LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created on auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT
-    ON auth.users
-    FOR EACH ROW
-EXECUTE PROCEDURE auth.create_new_public_user();
-
-create or replace view me as
-select *
-from public.users
-where id = auth.uid();
-
+drop materialized view reviews_summary;
+create materialized view reviews_summary as
+select place_id,
+       count(*) as total_reviews,
+       sum(CASE WHEN card_payment_accepted = 'Y' THEN 1 ELSE 0 END) / count(*) as p_card_payment_accepted,
+       sum(CASE WHEN contactless_payment_accepted = 'Y' THEN 1 ELSE 0 END) / count(*) as p_contactless_payment_accepted
+from public.reviews
+group by place_id;
+refresh materialized view reviews_summary;
+select * from reviews_summary;
