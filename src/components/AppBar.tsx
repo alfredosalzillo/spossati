@@ -6,7 +6,13 @@ import {
   IconButton,
   InputAdornment,
   Toolbar,
-  AppBar as MuiAppBar, Collapse, Paper, List, IconButtonProps, TextFieldProps,
+  AppBar as MuiAppBar,
+  Collapse,
+  Paper,
+  List,
+  IconButtonProps,
+  TextFieldProps,
+  Slide,
 } from '@material-ui/core';
 import TextField from '@material-ui/core/TextField';
 import ArrowBack from '@material-ui/icons/ArrowBack';
@@ -148,7 +154,7 @@ const AppBar = <T, >(props: AppBarProps<T>) => {
           </Container>
         </Toolbar>
       </MuiAppBar>
-      <Collapse in={showOptions} mountOnEnter unmountOnExit>
+      <Slide in={showOptions} mountOnEnter unmountOnExit>
         <Paper className={classes.searchResultRoot} elevation={0}>
           <AppBarPlaceholder />
           <Collapse in={renderOption && !!options?.length}>
@@ -159,7 +165,7 @@ const AppBar = <T, >(props: AppBarProps<T>) => {
             </Container>
           </Collapse>
         </Paper>
-      </Collapse>
+      </Slide>
       <Collapse in={active} mountOnEnter unmountOnExit>
         <Toolbar className={classes.root} />
       </Collapse>

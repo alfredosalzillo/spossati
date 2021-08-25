@@ -7,7 +7,7 @@ import {
   ListItemAvatar,
   ListItemText,
 } from '@material-ui/core';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useRouteMatch } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import {
@@ -211,9 +211,12 @@ const useHomeState = (params: StateParams): HomeState => {
 
 export type HomeProps = {};
 const Home: React.FunctionComponent<HomeProps> = () => {
+  const showSearchResult = !!useRouteMatch('/search');
+  const placesRoute = useRouteMatch<{ id: string }>('/places/:id');
+  const showPlaceDetails = !!placesRoute;
+  const placeId = placesRoute?.params?.id;
   const [{
     q: query,
-    place_id: placeId,
   }, setSearchParams] = useSearchParams();
   const history = useHistory();
   const {
@@ -225,8 +228,6 @@ const Home: React.FunctionComponent<HomeProps> = () => {
     query,
     placeId,
   });
-  const showSearchResult = Boolean((query || query === '') && !placeId);
-  const showPlaceDetails = !!placeId;
   const withBackButton = !!showSearchResult || !!showPlaceDetails;
   const renderAvatar = () => {
     if (!showSearchResult && !showPlaceDetails) {
@@ -247,10 +248,8 @@ const Home: React.FunctionComponent<HomeProps> = () => {
             }, 'replaceIn');
           }}
           onSearchFocus={() => {
-            if (query === null || query === undefined) {
-              setSearchParams(() => ({
-                q: '',
-              }), 'pushIn');
+            if (!showSearchResult) {
+              history.push('/search');
             }
           }}
           loading={loading}
@@ -267,7 +266,7 @@ const Home: React.FunctionComponent<HomeProps> = () => {
               last={index < predictions.length - 1}
               onClick={(current) => {
                 const q = current.structured_formatting.main_text;
-                history.push(`/?q=${q}&place_id=${current.place_id}`);
+                history.push(`/places/${current.place_id}?q=${q}`);
               }}
             />
           )}
