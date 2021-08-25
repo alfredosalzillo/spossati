@@ -59,7 +59,7 @@ const Map: React.FC<MapProps> = ({
         if ('placeId' in e) {
           e.stop();
           // @ts-ignore
-          history.push(`/?place_id=${e.placeId}`);
+          history.push(`/places/${e.placeId}`);
         }
         return null;
       }}
