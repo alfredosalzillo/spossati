@@ -4,6 +4,8 @@ create type YDN as enum ('Y', 'D', 'N');
 create type REVIEW_STATUS as enum('pending', 'valid', 'rejected');
 
 drop table public.reviews;
+drop materialized view reviews_summary;
+
 create table public.reviews
 (
     id                           uuid      default gen_random_uuid() not null primary key,
@@ -30,7 +32,7 @@ create
     policy "individuals can delete their own reviews" on public.reviews for
     delete using (auth.uid() = user_id);
 
-drop materialized view reviews_summary;
+
 create materialized view reviews_summary as
 select place_id,
        count(*) as total_reviews,
@@ -39,4 +41,3 @@ select place_id,
 from public.reviews
 group by place_id;
 refresh materialized view reviews_summary;
-select * from reviews_summary;
