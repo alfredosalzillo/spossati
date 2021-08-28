@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { Provider as SupabaseProvider } from 'react-supabase';
 import {
   LoadScript,
 } from '@react-google-maps/api';
@@ -11,6 +10,7 @@ import { SignalProvider } from '@api/signal';
 import SignInDialog from '@components/SignInDialog';
 import SplashScreen from '@components/SplashScreen';
 import AppMenuDialog from '@components/AppMenuDialog';
+import { SwrSupabaseContext } from 'supabase-swr';
 import Home from './Routes/Home';
 import Logout from './Routes/Logout';
 
@@ -28,7 +28,7 @@ const libraries = ['places'];
 const App = () => (
   <Suspense fallback={<SplashScreen />}>
     <SignalProvider>
-      <SupabaseProvider value={client}>
+      <SwrSupabaseContext.Provider value={client}>
         <LoadScript
           googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_PUBLIC_KEY || ''}
           libraries={libraries as any}
@@ -50,7 +50,7 @@ const App = () => (
             </QueryParamProvider>
           </BrowserRouter>
         </LoadScript>
-      </SupabaseProvider>
+      </SwrSupabaseContext.Provider>
     </SignalProvider>
   </Suspense>
 );

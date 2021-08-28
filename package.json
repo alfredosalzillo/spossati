@@ -20,7 +20,8 @@
     "react-google-button": "^0.7.2",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
-    "react-supabase": "^0.2.0",
+    "supabase-swr": "^1.0.0-alpha.0",
+    "swr": "^1.0.0",
     "use-debounce": "^7.0.0",
     "use-query-params": "^1.2.3",
     "web-vitals": "^2.1.0"

@@ -1,11 +1,9 @@
 import React from 'react';
-import {
-  useClient, useFilter, useSelect,
-} from 'react-supabase';
 import useSession from '@auth/use-session';
 import {
   Button, ButtonGroup, Collapse, FormControl, Paper, Typography
 } from '@material-ui/core';
+import { useClient, useSelect, useSelectKey } from 'supabase-swr';
 
 type YDN = 'Y' | 'D' | 'N';
 type Review = {
@@ -19,13 +17,16 @@ type Review = {
 const useCurrentUserReview = (placeId: string) => {
   const session = useSession();
   const userId = session.user.id;
-  const filter = useFilter<Review>((query) => query
-    .filter('user_id', 'eq', userId)
-    .filter('place_id', 'eq', placeId)
-    .order('created_at', { ascending: false }), [userId, placeId]);
-  return useSelect('reviews', {
+  const key = useSelectKey<Review>('reviews', {
     columns: '*',
-    filter,
+    filter: (query) => query
+      .filter('user_id', 'eq', userId)
+      .filter('place_id', 'eq', placeId)
+      .order('created_at', { ascending: false })
+      .limit(1),
+  }, [userId, placeId]);
+  return useSelect<Review>(key, {
+    shouldRetryOnError: false,
   });
 };
 type AddReviewBoxProps = {
@@ -34,10 +35,11 @@ type AddReviewBoxProps = {
 const AddReviewBox: React.FunctionComponent<AddReviewBoxProps> = ({
   placeId,
 }) => {
-  const [{
-    fetching,
-    data = [],
-  }, update] = useCurrentUserReview(placeId);
+  const {
+    isValidating,
+    data,
+    mutate,
+  } = useCurrentUserReview(placeId);
   const client = useClient();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const addReview = (cardPaymentAccepted: YDN) => {
@@ -46,12 +48,12 @@ const AddReviewBox: React.FunctionComponent<AddReviewBoxProps> = ({
       card_payment_accepted: cardPaymentAccepted,
     })
       .filter('place_id', 'eq', placeId)
-      .then(update);
+      .then(() => mutate());
   };
-  const [review] = data as Review[];
+  const review = data?.data?.[0];
   if (review) {
     return (
-      <Collapse in={!fetching}>
+      <Collapse in={!isValidating}>
         <Paper variant="outlined" component="form" style={{ padding: 12 }}>
           <Typography variant="body2" gutterBottom>
             Are card payment accepted?
@@ -68,7 +70,7 @@ const AddReviewBox: React.FunctionComponent<AddReviewBoxProps> = ({
     );
   }
   return (
-    <Collapse in={!review && !fetching}>
+    <Collapse in={!review && !isValidating}>
       <Paper variant="outlined" component="form" style={{ padding: 12 }}>
         <Typography variant="h6" component="h3" gutterBottom>
           Evaluate you experience

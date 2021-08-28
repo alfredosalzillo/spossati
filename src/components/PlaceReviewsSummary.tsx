@@ -1,7 +1,7 @@
 import React from 'react';
-import { useFilter, useSelect } from 'react-supabase';
 import { Alert } from '@material-ui/lab';
 import { Typography } from '@material-ui/core';
+import { useSelectKey, useSelectSingle } from 'supabase-swr';
 
 type ReviewSummary = {
   place_id: string,
@@ -10,12 +10,12 @@ type ReviewSummary = {
   p_contactless_payment_accepted: number,
 };
 const useReviewSummary = (placeId: string) => {
-  const filter = useFilter<ReviewSummary>((query) => query
-    .filter('place_id', 'eq', placeId), [placeId]);
-  return useSelect('reviews_summary', {
+  const key = useSelectKey<ReviewSummary>('reviews_summary', {
     columns: '*',
-    filter,
-  });
+    filter: (query) => query
+      .filter('place_id', 'eq', placeId),
+  }, []);
+  return useSelectSingle<ReviewSummary>(key, {});
 };
 
 type PlaceReviewsSummaryProps = {
@@ -24,13 +24,15 @@ type PlaceReviewsSummaryProps = {
 const PlaceReviewsSummary: React.FunctionComponent<PlaceReviewsSummaryProps> = ({
   placeId,
 }) => {
-  const [{
-    data = [],
-    fetching,
-  }] = useReviewSummary(placeId);
-  if (fetching || !data) return <></>;
-  const [stats] = data;
-  if (!stats) {
+  const {
+    data,
+    isValidating,
+  } = useReviewSummary(placeId);
+  if (isValidating || !data) return <></>;
+  const {
+    data: stats,
+  } = data;
+  if (!isValidating) {
     return (
       <Typography variant="body1" gutterBottom>
         No review yet for this structure. Be the first to leave a review!

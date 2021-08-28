@@ -1,6 +1,6 @@
 import React from 'react';
 import GoogleButton from 'react-google-button';
-import { useSignIn } from 'react-supabase';
+import { useClient } from 'supabase-swr';
 import Dialog, { DialogContent, DialogTitle, useDialog } from './Dialog';
 
 export const SignInDialogKey = '__SignIn__Dialog';
@@ -8,7 +8,7 @@ export const SignInDialogKey = '__SignIn__Dialog';
 export const useSignInDialog = () => useDialog<never>(SignInDialogKey);
 
 const SignInDialog = () => {
-  const [, signIn] = useSignIn();
+  const client = useClient();
   const {
     opened = false,
     close,
@@ -31,7 +31,7 @@ const SignInDialog = () => {
         <GoogleButton
           style={{ margin: 'auto', width: 'auto' }}
           onClick={() => {
-            signIn({
+            client.auth.signIn({
               provider: 'google',
             }, {
               redirectTo: window.location.href,

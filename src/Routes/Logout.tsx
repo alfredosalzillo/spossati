@@ -1,12 +1,12 @@
-import { useSignOut } from 'react-supabase';
 import React, { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
+import { useClient } from 'supabase-swr';
 
 const Logout = () => {
   const history = useHistory();
-  const [, signOut] = useSignOut();
+  const client = useClient();
   useEffect(() => {
-    signOut().then(() => {
+    client.auth.signOut().then(() => {
       history.replace('/');
     });
   }, []);
